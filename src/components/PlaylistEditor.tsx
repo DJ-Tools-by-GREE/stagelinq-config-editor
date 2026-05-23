@@ -55,7 +55,15 @@ export function PlaylistEditor({ config, onChange }: Props) {
   };
 
   const deleteEntry = (idx: number) => {
-    setContent(playlist.content.filter((_, i) => i !== idx));
+    const filtered = playlist.content.filter((_, i) => i !== idx);
+    if (idx < playlist.content.length - 1) {
+      const gap = playlist.content[idx + 1].offset_sec - playlist.content[idx].offset_sec;
+      setContent(filtered.map((entry, i) =>
+        i >= idx ? { ...entry, offset_sec: entry.offset_sec - gap } : entry
+      ));
+    } else {
+      setContent(filtered);
+    }
   };
 
   const moveEntry = (idx: number, dir: -1 | 1) => {
