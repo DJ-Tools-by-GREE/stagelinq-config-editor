@@ -19,6 +19,7 @@ export interface TimecodeConfig {
   fps: number;
   target_ip: string;
   target_port: number;
+  stream_id: number;
 }
 
 export interface ControlInputConfig {

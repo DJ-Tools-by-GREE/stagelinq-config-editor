@@ -54,6 +54,14 @@ export function GlobalSettings({ config, onChange }: Props) {
                 onChange={e => setTimecode({ fps: Number(e.target.value) })}
               />
             </label>
+            <label>
+              Stream ID
+              <input
+                type="number"
+                value={config.timecode.stream_id}
+                onChange={e => setTimecode({ stream_id: Number(e.target.value) })}
+              />
+            </label>
           </div>
 
           <div className="settings-card">
