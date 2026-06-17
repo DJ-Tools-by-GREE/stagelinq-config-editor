@@ -6,6 +6,64 @@ interface Props {
   onChange: (config: AppConfig) => void;
 }
 
+const IPV4_RE = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+
+function isValidIpv4(s: string): boolean {
+  return IPV4_RE.test(s.trim());
+}
+
+interface IpListEditorProps {
+  value: string[];
+  onChange: (next: string[]) => void;
+}
+
+function IpListEditor({ value, onChange }: IpListEditorProps) {
+  const update = (i: number, v: string) => {
+    const next = [...value];
+    next[i] = v;
+    onChange(next);
+  };
+  const remove = (i: number) => {
+    const next = value.filter((_, j) => j !== i);
+    onChange(next);
+  };
+  const add = () => onChange([...value, '']);
+
+  return (
+    <div className="ip-list">
+      {value.length === 0 && (
+        <p className="hint warn">⚠ No targets — backend will fall back to env / default.</p>
+      )}
+      {value.map((ip, i) => {
+        const trimmed = ip.trim();
+        const invalid = trimmed.length > 0 && !isValidIpv4(trimmed);
+        return (
+          <div key={i} className="ip-row">
+            <input
+              type="text"
+              value={ip}
+              placeholder="0.0.0.0"
+              className={invalid ? 'invalid' : ''}
+              onChange={e => update(i, e.target.value)}
+            />
+            <button
+              type="button"
+              className="btn btn-icon"
+              title="Remove"
+              onClick={() => remove(i)}
+            >
+              ✕
+            </button>
+          </div>
+        );
+      })}
+      <button type="button" className="btn btn-secondary btn-small" onClick={add}>
+        + Add IP
+      </button>
+    </div>
+  );
+}
+
 export function GlobalSettings({ config, onChange }: Props) {
   const [open, setOpen] = useState(true);
 
@@ -17,6 +75,18 @@ export function GlobalSettings({ config, onChange }: Props) {
 
   const setOsc = (patch: Partial<AppConfig['osc']>) =>
     onChange({ ...config, osc: { ...config.osc, ...patch } });
+
+  const setWaveform = (patch: Partial<AppConfig['waveform']>) =>
+    onChange({ ...config, waveform: { ...config.waveform, ...patch } });
+
+  const setSacnSim = (patch: Partial<AppConfig['sacn_sim']>) =>
+    onChange({ ...config, sacn_sim: { ...config.sacn_sim, ...patch } });
+
+  const setDisplay = (patch: Partial<AppConfig['display']>) =>
+    onChange({ ...config, display: { ...config.display, ...patch } });
+
+  const setLogging = (patch: Partial<AppConfig['logging']>) =>
+    onChange({ ...config, logging: { ...config.logging, ...patch } });
 
   return (
     <section className="global-settings">
@@ -30,11 +100,10 @@ export function GlobalSettings({ config, onChange }: Props) {
           <div className="settings-card">
             <h3>Timecode</h3>
             <label>
-              Target IP
-              <input
-                type="text"
-                value={config.timecode.target_ip}
-                onChange={e => setTimecode({ target_ip: e.target.value })}
+              Target IPs
+              <IpListEditor
+                value={config.timecode.target_ips}
+                onChange={target_ips => setTimecode({ target_ips })}
               />
             </label>
             <label>
@@ -95,6 +164,19 @@ export function GlobalSettings({ config, onChange }: Props) {
           </div>
 
           <div className="settings-card">
+            <h3>sACN Sim</h3>
+            <label className="label-inline">
+              <span>Enabled</span>
+              <input
+                type="checkbox"
+                checked={config.sacn_sim.enabled}
+                onChange={e => setSacnSim({ enabled: e.target.checked })}
+              />
+            </label>
+            <p className="hint">Simulated sACN feed for development.</p>
+          </div>
+
+          <div className="settings-card">
             <h3>OSC</h3>
             <label className="label-inline">
               <span>Enabled</span>
@@ -105,11 +187,10 @@ export function GlobalSettings({ config, onChange }: Props) {
               />
             </label>
             <label>
-              Target IP
-              <input
-                type="text"
-                value={config.osc.target_ip}
-                onChange={e => setOsc({ target_ip: e.target.value })}
+              Target IPs
+              <IpListEditor
+                value={config.osc.target_ips}
+                onChange={target_ips => setOsc({ target_ips })}
               />
             </label>
             <label>
@@ -128,6 +209,130 @@ export function GlobalSettings({ config, onChange }: Props) {
                 onChange={e => setOsc({ speedmaster: Number(e.target.value) })}
               />
             </label>
+          </div>
+
+          <div className="settings-card">
+            <h3>Waveform</h3>
+            <label className="label-inline">
+              <span>All Tracks</span>
+              <input
+                type="checkbox"
+                checked={config.waveform.all_tracks}
+                onChange={e => setWaveform({ all_tracks: e.target.checked })}
+              />
+            </label>
+            <p className="hint">
+              When off, peaks are only extracted for tracks in the active playlist.
+            </p>
+          </div>
+
+          <div className="settings-card">
+            <h3>Console Display</h3>
+            <label className="label-inline">
+              <span>Dashboard</span>
+              <input
+                type="checkbox"
+                checked={config.display.dashboard}
+                onChange={e => setDisplay({ dashboard: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Art-Net</span>
+              <input
+                type="checkbox"
+                checked={config.display.artnet}
+                onChange={e => setDisplay({ artnet: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Info</span>
+              <input
+                type="checkbox"
+                checked={config.display.info}
+                onChange={e => setDisplay({ info: e.target.checked })}
+              />
+            </label>
+          </div>
+
+          <div className="settings-card">
+            <h3>Logging Channels</h3>
+            <label className="label-inline">
+              <span>Lifecycle</span>
+              <input
+                type="checkbox"
+                checked={config.logging.lifecycle}
+                onChange={e => setLogging({ lifecycle: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Playback</span>
+              <input
+                type="checkbox"
+                checked={config.logging.playback}
+                onChange={e => setLogging({ playback: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Discover</span>
+              <input
+                type="checkbox"
+                checked={config.logging.discover}
+                onChange={e => setLogging({ discover: e.target.checked })}
+              />
+            </label>
+            <label
+              className={`label-inline indent${config.logging.discover ? '' : ' disabled'}`}
+            >
+              <span>Discover Speed</span>
+              <input
+                type="checkbox"
+                checked={config.logging.discoverSpeed}
+                onChange={e => setLogging({ discoverSpeed: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>BPM Debug</span>
+              <input
+                type="checkbox"
+                checked={config.logging.bpmDebug}
+                onChange={e => setLogging({ bpmDebug: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>UI Out</span>
+              <input
+                type="checkbox"
+                checked={config.logging.uiOut}
+                onChange={e => setLogging({ uiOut: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Errors</span>
+              <input
+                type="checkbox"
+                checked={config.logging.errors}
+                onChange={e => setLogging({ errors: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Cues</span>
+              <input
+                type="checkbox"
+                checked={config.logging.cues}
+                onChange={e => setLogging({ cues: e.target.checked })}
+              />
+            </label>
+            <label className="label-inline">
+              <span>Art-Net Stats</span>
+              <input
+                type="checkbox"
+                checked={config.logging.artnetStats}
+                onChange={e => setLogging({ artnetStats: e.target.checked })}
+              />
+            </label>
+            <p className="hint">
+              Art-Net Stats only silences periodic heartbeat logs — warnings are emitted regardless.
+            </p>
           </div>
 
           <div className="settings-card">

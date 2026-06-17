@@ -290,6 +290,59 @@ input[type="checkbox"] {
   line-height: 1.4;
 }
 
+.hint.warn {
+  color: #e6a23c;
+}
+
+.ip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ip-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ip-row input {
+  flex: 1;
+}
+
+.ip-row input.invalid {
+  border-color: var(--danger);
+}
+
+.btn-icon {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.btn-icon:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-small {
+  padding: 4px 8px;
+  font-size: 11px;
+  align-self: flex-start;
+}
+
+.label-inline.indent {
+  padding-left: 14px;
+}
+
+.label-inline.disabled {
+  opacity: 0.5;
+}
+
 /* ─── Playlist editor ─── */
 
 .playlist-editor {
@@ -439,12 +492,26 @@ input[type="checkbox"] {
 
 /* Column widths */
 .col-num    { width: 36px; text-align: right; }
+.col-mashup { width: 32px; text-align: center; }
 .col-song   { width: auto; min-width: 200px; }
 .col-offset { width: 170px; }
 .col-frame  { width: 70px; }
 .col-note   { width: auto; min-width: 180px; }
 .col-showsec { width: 110px; }
 .col-actions { width: 80px; white-space: nowrap; }
+
+.cell-disabled {
+  opacity: 0.5;
+}
+
+.cell-input:disabled {
+  cursor: not-allowed;
+}
+
+.row-mashup {
+  background: rgba(157, 78, 221, 0.06);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 
 .cell-input {
   background: transparent;

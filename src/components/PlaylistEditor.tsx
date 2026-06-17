@@ -172,6 +172,7 @@ export function PlaylistEditor({ config, onChange }: Props) {
             <thead>
               <tr>
                 <th className="col-num">#</th>
+                <th className="col-mashup" title="Mashup / vocals only — overlay track, no timecode, no offset, skipped in next-track display">M</th>
                 <th className="col-song">Song Index</th>
                 <th className="col-offset">Offset (sec)</th>
                 <th className="col-frame">Frame</th>
@@ -181,9 +182,21 @@ export function PlaylistEditor({ config, onChange }: Props) {
               </tr>
             </thead>
             <tbody>
-              {playlist.content.map((entry, i) => (
-                <tr key={i}>
+              {playlist.content.map((entry, i) => {
+                const mashup = entry.mashup_only === true;
+                return (
+                <tr key={i} className={mashup ? 'row-mashup' : ''}>
                   <td className="col-num muted">{i + 1}</td>
+                  <td className="col-mashup">
+                    <input
+                      type="checkbox"
+                      title="Mashup / vocals only — overlay track, no timecode, no offset, skipped in next-track display"
+                      checked={mashup}
+                      onChange={e =>
+                        updateEntry(i, { mashup_only: e.target.checked ? true : undefined })
+                      }
+                    />
+                  </td>
                   <td className="col-song">
                     <input
                       type="text"
@@ -192,31 +205,34 @@ export function PlaylistEditor({ config, onChange }: Props) {
                       onChange={e => updateEntry(i, { song_index: e.target.value })}
                     />
                   </td>
-                  <td className="col-offset">
+                  <td className={`col-offset${mashup ? ' cell-disabled' : ''}`}>
                     <div className="offset-cell">
                       <input
                         type="number"
                         className="cell-input"
+                        disabled={mashup}
                         value={entry.offset_sec}
                         onChange={e => updateEntry(i, { offset_sec: Number(e.target.value) })}
                       />
                       <span className="hms-badge">{secToHMS(entry.offset_sec)}</span>
                     </div>
                   </td>
-                  <td className="col-frame">
+                  <td className={`col-frame${mashup ? ' cell-disabled' : ''}`}>
                     <input
                       type="number"
                       className="cell-input"
+                      disabled={mashup}
                       min={0}
                       max={29}
                       value={entry.offset_frame}
                       onChange={e => updateEntry(i, { offset_frame: Number(e.target.value) })}
                     />
                   </td>
-                  <td className="col-note">
+                  <td className={`col-note${mashup ? ' cell-disabled' : ''}`}>
                     <input
                       type="text"
                       className="cell-input"
+                      disabled={mashup}
                       value={entry.note.description}
                       placeholder="note…"
                       onChange={e =>
@@ -224,10 +240,11 @@ export function PlaylistEditor({ config, onChange }: Props) {
                       }
                     />
                   </td>
-                  <td className="col-showsec">
+                  <td className={`col-showsec${mashup ? ' cell-disabled' : ''}`}>
                     <input
                       type="number"
                       className="cell-input"
+                      disabled={mashup}
                       value={entry.note.show_secs_before_transition_starts}
                       onChange={e =>
                         updateEntry(i, {
@@ -245,7 +262,8 @@ export function PlaylistEditor({ config, onChange }: Props) {
                     <button className="btn-icon danger" title="Delete" onClick={() => deleteEntry(i)}>✕</button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
