@@ -11,9 +11,13 @@ const w = window as any;
  *   - apply defaults for any missing top-level section
  *   - migrate legacy `target_ip` → `target_ips: [target_ip]` for timecode and osc
  *   - drop the legacy singular field once the array is populated
+ *   - migrate legacy note field `show_secs_before_transition_starts` →
+ *     `show_secs_after_load: 0` (semantics changed: now timed off track-load
+ *     rather than transition-start, so the old number is discarded). Returns
+ *     `legacyNoteFieldFound` so the caller can warn the operator.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function migrateConfig(raw: any): AppConfig {
+function migrateConfig(raw: any): { config: AppConfig; legacyNoteFieldFound: boolean } {
   const src = (raw && typeof raw === 'object') ? raw : {};
 
   const tc = { ...(src.timecode ?? {}) };
@@ -36,9 +40,32 @@ function migrateConfig(raw: any): AppConfig {
   }
   delete osc.target_ip;
 
-  return {
+  let legacyNoteFieldFound = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const playlists = (Array.isArray(src.playlists) ? src.playlists : []).map((pl: any) => ({
+    ...pl,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    content: Array.isArray(pl?.content)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? pl.content.map((entry: any) => {
+          if (!entry?.note) return entry;
+          const note = { ...entry.note };
+          if ('show_secs_before_transition_starts' in note) {
+            legacyNoteFieldFound = true;
+            delete note.show_secs_before_transition_starts;
+          }
+          if (typeof note.show_secs_after_load !== 'number') {
+            note.show_secs_after_load = 0;
+          }
+          return { ...entry, note };
+        })
+      : pl?.content,
+  }));
+
+  const config: AppConfig = {
     current_playlist: src.current_playlist ?? DEFAULT_CONFIG.current_playlist,
     waveform: { ...DEFAULT_CONFIG.waveform, ...(src.waveform ?? {}) },
+    freewheel: { ...DEFAULT_CONFIG.freewheel, ...(src.freewheel ?? {}) },
     sacn_sim: { ...DEFAULT_CONFIG.sacn_sim, ...(src.sacn_sim ?? {}) },
     display: { ...DEFAULT_CONFIG.display, ...(src.display ?? {}) },
     logging: { ...DEFAULT_CONFIG.logging, ...(src.logging ?? {}) },
@@ -55,8 +82,9 @@ function migrateConfig(raw: any): AppConfig {
       target_port: osc.target_port ?? DEFAULT_CONFIG.osc.target_port,
       speedmaster: osc.speedmaster ?? DEFAULT_CONFIG.osc.speedmaster,
     },
-    playlists: Array.isArray(src.playlists) ? src.playlists : [],
+    playlists,
   };
+  return { config, legacyNoteFieldFound };
 }
 
 /**
@@ -70,7 +98,7 @@ function orderedEntry(entry: PlaylistEntry): Record<string, unknown> {
     offset_frame: entry.offset_frame,
     note: {
       description: entry.note.description,
-      show_secs_before_transition_starts: entry.note.show_secs_before_transition_starts,
+      show_secs_after_load: entry.note.show_secs_after_load,
     },
   };
   if (entry.mashup_only === true) {
@@ -112,6 +140,10 @@ function orderedConfig(config: AppConfig): Record<string, unknown> {
   return {
     current_playlist: config.current_playlist,
     waveform: { all_tracks: config.waveform.all_tracks },
+    freewheel: {
+      enable_freewheeling: config.freewheel.enable_freewheeling,
+      max_duration_sec: config.freewheel.max_duration_sec,
+    },
     sacn_sim: { enabled: config.sacn_sim.enabled },
     display: {
       dashboard: config.display.dashboard,
@@ -147,7 +179,7 @@ function serializeConfig(config: AppConfig): string {
   return JSON.stringify(orderedConfig(config), null, 4);
 }
 
-export async function openConfigFile(): Promise<{ config: AppConfig; handle: FileSystemFileHandle } | null> {
+export async function openConfigFile(): Promise<{ config: AppConfig; handle: FileSystemFileHandle; legacyNoteFieldFound: boolean } | null> {
   try {
     const [handle]: FileSystemFileHandle[] = await w.showOpenFilePicker({
       types: [{ description: 'JSON Config', accept: { 'application/json': ['.json'] } }],
@@ -155,8 +187,8 @@ export async function openConfigFile(): Promise<{ config: AppConfig; handle: Fil
     const file = await handle.getFile();
     const text = await file.text();
     const parsed = JSON.parse(text);
-    const config = migrateConfig(parsed);
-    return { config, handle };
+    const { config, legacyNoteFieldFound } = migrateConfig(parsed);
+    return { config, handle, legacyNoteFieldFound };
   } catch (e) {
     if ((e as Error).name !== 'AbortError') throw e;
     return null;

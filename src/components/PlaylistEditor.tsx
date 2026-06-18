@@ -14,7 +14,7 @@ function newEntry(offsetSec: number): PlaylistEntry {
     song_index: '',
     offset_sec: offsetSec,
     offset_frame: 0,
-    note: { description: '', show_secs_before_transition_starts: 600 },
+    note: { description: '', show_secs_after_load: 0 },
   };
 }
 
@@ -91,7 +91,7 @@ export function PlaylistEditor({ config, onChange }: Props) {
       song_index: s.fileName,
       offset_sec: startOffset + i * increment,
       offset_frame: 0,
-      note: { description: '', show_secs_before_transition_starts: 600 },
+      note: { description: '', show_secs_after_load: 0 },
     }));
     setContent([...playlist.content, ...entries]);
     setShowCsvModal(false);
@@ -177,7 +177,7 @@ export function PlaylistEditor({ config, onChange }: Props) {
                 <th className="col-offset">Offset (sec)</th>
                 <th className="col-frame">Frame</th>
                 <th className="col-note">Note</th>
-                <th className="col-showsec">Show N sec before</th>
+                <th className="col-showsec">Show N sec after load</th>
                 <th className="col-actions"></th>
               </tr>
             </thead>
@@ -245,12 +245,12 @@ export function PlaylistEditor({ config, onChange }: Props) {
                       type="number"
                       className="cell-input"
                       disabled={mashup}
-                      value={entry.note.show_secs_before_transition_starts}
+                      value={entry.note.show_secs_after_load}
                       onChange={e =>
                         updateEntry(i, {
                           note: {
                             ...entry.note,
-                            show_secs_before_transition_starts: Number(e.target.value),
+                            show_secs_after_load: Number(e.target.value),
                           },
                         })
                       }

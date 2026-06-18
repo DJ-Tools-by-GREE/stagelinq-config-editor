@@ -3,6 +3,7 @@ import type { AppConfig } from './types.ts';
 export const DEFAULT_CONFIG: AppConfig = {
   current_playlist: 0,
   waveform: { all_tracks: true },
+  freewheel: { enable_freewheeling: true, max_duration_sec: 30 },
   sacn_sim: { enabled: true },
   display: { dashboard: true, artnet: true, info: true },
   logging: {

@@ -79,6 +79,9 @@ export function GlobalSettings({ config, onChange }: Props) {
   const setWaveform = (patch: Partial<AppConfig['waveform']>) =>
     onChange({ ...config, waveform: { ...config.waveform, ...patch } });
 
+  const setFreewheel = (patch: Partial<AppConfig['freewheel']>) =>
+    onChange({ ...config, freewheel: { ...config.freewheel, ...patch } });
+
   const setSacnSim = (patch: Partial<AppConfig['sacn_sim']>) =>
     onChange({ ...config, sacn_sim: { ...config.sacn_sim, ...patch } });
 
@@ -223,6 +226,33 @@ export function GlobalSettings({ config, onChange }: Props) {
             </label>
             <p className="hint">
               When off, peaks are only extracted for tracks in the active playlist.
+            </p>
+          </div>
+
+          <div className="settings-card">
+            <h3>Freewheel</h3>
+            <label className="label-inline">
+              <span>Enable Freewheeling</span>
+              <input
+                type="checkbox"
+                checked={config.freewheel.enable_freewheeling}
+                onChange={e => setFreewheel({ enable_freewheeling: e.target.checked })}
+              />
+            </label>
+            <label>
+              Max Duration (sec)
+              <input
+                type="number"
+                min={0}
+                max={3600}
+                value={config.freewheel.max_duration_sec}
+                onChange={e => setFreewheel({
+                  max_duration_sec: Math.max(0, Math.min(3600, Number(e.target.value))),
+                })}
+              />
+            </label>
+            <p className="hint">
+              During a StageLinq stall, the Art-Net worker keeps emitting timecode at the last-known speed. After this many seconds it goes silent until beats resume. Disable to skip freewheel entirely.
             </p>
           </div>
 

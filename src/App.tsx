@@ -16,6 +16,7 @@ export function App() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [legacyNoteBanner, setLegacyNoteBanner] = useState(false);
 
   const updateConfig = (next: AppConfig) => {
     setConfig(next);
@@ -28,6 +29,7 @@ export function App() {
     setFileHandle(null);
     setFileName(null);
     setDirty(false);
+    setLegacyNoteBanner(false);
   };
 
   const handleOpen = async () => {
@@ -37,7 +39,8 @@ export function App() {
       setConfig(result.config);
       setFileHandle(result.handle);
       setFileName(result.handle.name);
-      setDirty(false);
+      setDirty(result.legacyNoteFieldFound);
+      setLegacyNoteBanner(result.legacyNoteFieldFound);
       setSaveError('');
     } catch (e) {
       setSaveError(`Failed to open: ${(e as Error).message}`);
@@ -109,6 +112,19 @@ export function App() {
 
       {saveError && (
         <div className="error-banner">{saveError}</div>
+      )}
+
+      {legacyNoteBanner && (
+        <div className="warning-banner">
+          Legacy <code>show_secs_before_transition_starts</code> values discarded — review note timings. The field has been replaced by <code>show_secs_after_load</code> (timer now starts at track-load, not transition-start).
+          <button
+            className="btn btn-icon"
+            title="Dismiss"
+            onClick={() => setLegacyNoteBanner(false)}
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       <main className="app-main">

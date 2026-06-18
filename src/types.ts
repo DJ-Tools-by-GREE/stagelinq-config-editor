@@ -1,6 +1,7 @@
 export interface NoteField {
   description: string;
-  show_secs_before_transition_starts: number;
+  /** Delay (in seconds) measured from track-load before the note is shown. Default 0. */
+  show_secs_after_load: number;
 }
 
 export interface PlaylistEntry {
@@ -45,6 +46,12 @@ export interface WaveformConfig {
   all_tracks: boolean;
 }
 
+export interface FreewheelConfig {
+  enable_freewheeling: boolean;
+  /** Backend clamps to 0–3600. */
+  max_duration_sec: number;
+}
+
 export interface SacnSimConfig {
   enabled: boolean;
 }
@@ -70,6 +77,7 @@ export interface LoggingConfig {
 export interface AppConfig {
   current_playlist: number;
   waveform: WaveformConfig;
+  freewheel: FreewheelConfig;
   sacn_sim: SacnSimConfig;
   display: DisplayConfig;
   logging: LoggingConfig;
